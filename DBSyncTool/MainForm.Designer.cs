@@ -928,7 +928,7 @@ namespace DBSyncTool
 
             // Summary Label (in Tables tab)
             lblSummary.AutoSize = true;
-            lblSummary.Location = new Point(12, 623);
+            lblSummary.Location = new Point(12, 608);
             lblSummary.Name = "lblSummary";
             lblSummary.Size = new Size(0, 15);
             lblSummary.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
@@ -936,9 +936,9 @@ namespace DBSyncTool
             // Log Panel (in Tables tab)
             grpLog.Controls.Add(btnClearLog);
             grpLog.Controls.Add(txtLog);
-            grpLog.Location = new Point(12, 645);
+            grpLog.Location = new Point(12, 625);
             grpLog.Name = "grpLog";
-            grpLog.Size = new Size(1360, 145);
+            grpLog.Size = new Size(1360, 185);
             grpLog.Text = "Log";
             grpLog.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
@@ -961,14 +961,14 @@ namespace DBSyncTool
             txtLog.ReadOnly = true;
             txtLog.ScrollBars = ScrollBars.Both;
             txtLog.WordWrap = false;
-            txtLog.Size = new Size(1305, 115);
+            txtLog.Size = new Size(1305, 155);
             txtLog.Font = new Font("Consolas", 9F);
             txtLog.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
             // MainForm
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1421, 892);
+            ClientSize = new Size(1421, 912);
             Controls.Add(lblConfig);
             Controls.Add(cmbConfig);
             Controls.Add(tabControl);
