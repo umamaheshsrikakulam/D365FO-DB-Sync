@@ -1423,8 +1423,8 @@ namespace DBSyncTool.Services
                 return ParseSqlStrategy(tableName, part1, null, useTruncate);
             }
 
-            // Case 3: TableName|Number (RecId strategy)
-            if (int.TryParse(part1, out int count))
+            // Case 3: TableName|Number (RecId strategy) - supports 'm'/'M' suffix for millions (e.g., 10m = 10,000,000)
+            if (TryParseRecordCount(part1, out int count))
             {
                 if (count <= 0)
                     throw new Exception("Invalid format: RecId count must be positive");
@@ -1454,6 +1454,22 @@ namespace DBSyncTool.Services
             }
 
             throw new Exception($"Invalid format: '{part1}' is not a valid strategy (expected number or 'sql:...')");
+        }
+
+        private static bool TryParseRecordCount(string input, out int count)
+        {
+            if (input.EndsWith("m", StringComparison.OrdinalIgnoreCase))
+            {
+                string numericPart = input.Substring(0, input.Length - 1);
+                if (int.TryParse(numericPart, out int millions))
+                {
+                    count = millions * 1_000_000;
+                    return true;
+                }
+                count = 0;
+                return false;
+            }
+            return int.TryParse(input, out count);
         }
 
         private StrategyOverride ParseSqlStrategy(string tableName, string sqlPart, int? recordCount, bool useTruncate)

@@ -337,7 +337,8 @@ namespace DBSyncTool
                 "Simplified Strategy Syntax (one per line):\n\n" +
                 "RecId Strategy:\n" +
                 "  TABLENAME               Use default record count\n" +
-                "  TABLENAME|5000          Top 5000 records by RecId DESC\n\n" +
+                "  TABLENAME|5000          Top 5000 records by RecId DESC\n" +
+                "  TABLENAME|10m           Top 10 million records by RecId DESC\n\n" +
                 "SQL Strategy (custom query):\n" +
                 "  TABLENAME|sql:SELECT * FROM TABLENAME WHERE DATAAREAID='1000'\n" +
                 "  TABLENAME|5000|sql:SELECT * FROM TABLENAME WHERE POSTED=1\n\n" +
@@ -351,6 +352,7 @@ namespace DBSyncTool
                 "Examples:\n" +
                 "  CUSTTABLE\n" +
                 "  SALESLINE|10000\n" +
+                "  ECORESATTRIBUTEVALUE|10m\n" +
                 "  INVENTTRANS|sql:SELECT * FROM INVENTTRANS WHERE DATAAREAID='USMF'\n" +
                 "  CUSTTRANS|5000|sql:SELECT TOP (@recordCount) * FROM CUSTTRANS WHERE BLOCKED=0\n" +
                 "  VENDTABLE|5000 -truncate\n\n" +
