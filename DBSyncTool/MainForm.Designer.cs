@@ -125,6 +125,16 @@ namespace DBSyncTool
             txtBackupPath = new TextBox();
             chkBackupDatabaseEnabled = new CheckBox();
             btnExecuteBackup = new Button();
+            txtLastBackupPath = new TextBox();
+
+            // PowerShell Script controls
+            lblPowerShellScript = new Label();
+            lblPowerShellHelp = new Label();
+            txtPowerShellScriptPath = new TextBox();
+            btnBrowsePowerShell = new Button();
+            btnPowerShellHelp = new Button();
+            chkPowerShellAutoExecute = new CheckBox();
+            btnExecutePowerShell = new Button();
 
             // Action buttons
             btnPrepareTableList = new Button();
@@ -408,7 +418,7 @@ namespace DBSyncTool
             chkExecutePostTransferActions.Text = "Execute Post-Transfer Actions";
             chkExecutePostTransferActions.Checked = false;
             ToolTip postTransferActionsTooltip = new ToolTip();
-            postTransferActionsTooltip.SetToolTip(chkExecutePostTransferActions, "When checked, executes post-transfer actions (SQL scripts, backup) after successful table processing");
+            postTransferActionsTooltip.SetToolTip(chkExecutePostTransferActions, "When checked, executes post-transfer actions (SQL scripts, backup, PowerShell script) after successful table processing");
 
             lblFieldsToExclude.AutoSize = true;
             lblFieldsToExclude.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
@@ -723,6 +733,14 @@ namespace DBSyncTool
             tabPostTransfer.Controls.Add(txtBackupPath);
             tabPostTransfer.Controls.Add(chkBackupDatabaseEnabled);
             tabPostTransfer.Controls.Add(btnExecuteBackup);
+            tabPostTransfer.Controls.Add(txtLastBackupPath);
+            tabPostTransfer.Controls.Add(lblPowerShellScript);
+            tabPostTransfer.Controls.Add(lblPowerShellHelp);
+            tabPostTransfer.Controls.Add(txtPowerShellScriptPath);
+            tabPostTransfer.Controls.Add(btnBrowsePowerShell);
+            tabPostTransfer.Controls.Add(btnPowerShellHelp);
+            tabPostTransfer.Controls.Add(chkPowerShellAutoExecute);
+            tabPostTransfer.Controls.Add(btnExecutePowerShell);
             tabPostTransfer.Location = new Point(4, 24);
             tabPostTransfer.Name = "tabPostTransfer";
             tabPostTransfer.Padding = new Padding(3);
@@ -788,6 +806,60 @@ namespace DBSyncTool
             btnExecuteBackup.Text = "Execute";
             btnExecuteBackup.UseVisualStyleBackColor = true;
             btnExecuteBackup.Click += BtnExecuteBackup_Click;
+
+            // Last Backup Path (read-only textbox for easy copy)
+            txtLastBackupPath.Location = new Point(10, 512);
+            txtLastBackupPath.Size = new Size(700, 20);
+            txtLastBackupPath.Font = new Font("Consolas", 8F);
+            txtLastBackupPath.ForeColor = Color.Gray;
+            txtLastBackupPath.ReadOnly = true;
+            txtLastBackupPath.BorderStyle = BorderStyle.None;
+            txtLastBackupPath.BackColor = SystemColors.Control;
+            txtLastBackupPath.Text = "Last backup: (none)";
+
+            // PowerShell Script Section
+            lblPowerShellScript.AutoSize = true;
+            lblPowerShellScript.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblPowerShellScript.Location = new Point(10, 545);
+            lblPowerShellScript.Text = "PowerShell Script After Backup";
+
+            lblPowerShellHelp.AutoSize = true;
+            lblPowerShellHelp.ForeColor = Color.Gray;
+            lblPowerShellHelp.Location = new Point(10, 570);
+            lblPowerShellHelp.Text = "Path to .ps1 script. Receives -BackupFilePath parameter with the resolved backup file path.";
+
+            txtPowerShellScriptPath.Location = new Point(10, 595);
+            txtPowerShellScriptPath.Name = "txtPowerShellScriptPath";
+            txtPowerShellScriptPath.Size = new Size(580, 23);
+            txtPowerShellScriptPath.Font = new Font("Consolas", 9F);
+
+            btnBrowsePowerShell.Location = new Point(595, 595);
+            btnBrowsePowerShell.Name = "btnBrowsePowerShell";
+            btnBrowsePowerShell.Size = new Size(30, 23);
+            btnBrowsePowerShell.Text = "...";
+            btnBrowsePowerShell.UseVisualStyleBackColor = true;
+            btnBrowsePowerShell.Click += BtnBrowsePowerShell_Click;
+
+            btnPowerShellHelp.Location = new Point(630, 595);
+            btnPowerShellHelp.Name = "btnPowerShellHelp";
+            btnPowerShellHelp.Size = new Size(20, 23);
+            btnPowerShellHelp.Text = "?";
+            btnPowerShellHelp.UseVisualStyleBackColor = true;
+            btnPowerShellHelp.Click += BtnPowerShellHelp_Click;
+            ToolTip psHelpTooltip = new ToolTip();
+            psHelpTooltip.SetToolTip(btnPowerShellHelp, "Copy sample script template to clipboard");
+
+            chkPowerShellAutoExecute.AutoSize = true;
+            chkPowerShellAutoExecute.Location = new Point(10, 628);
+            chkPowerShellAutoExecute.Name = "chkPowerShellAutoExecute";
+            chkPowerShellAutoExecute.Text = "Execute automatically after successful backup";
+
+            btnExecutePowerShell.Location = new Point(620, 623);
+            btnExecutePowerShell.Name = "btnExecutePowerShell";
+            btnExecutePowerShell.Size = new Size(90, 30);
+            btnExecutePowerShell.Text = "Execute";
+            btnExecutePowerShell.UseVisualStyleBackColor = true;
+            btnExecutePowerShell.Click += BtnExecutePowerShell_Click;
 
             // Action Buttons (in Tables tab)
             btnPrepareTableList.Location = new Point(12, 250);
@@ -1047,6 +1119,16 @@ namespace DBSyncTool
         private TextBox txtBackupPath;
         private CheckBox chkBackupDatabaseEnabled;
         private Button btnExecuteBackup;
+        private TextBox txtLastBackupPath;
+
+        // PowerShell Script controls
+        private Label lblPowerShellScript;
+        private Label lblPowerShellHelp;
+        private TextBox txtPowerShellScriptPath;
+        private Button btnBrowsePowerShell;
+        private Button btnPowerShellHelp;
+        private CheckBox chkPowerShellAutoExecute;
+        private Button btnExecutePowerShell;
 
         // Action Buttons
         private Button btnPrepareTableList;

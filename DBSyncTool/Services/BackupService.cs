@@ -33,7 +33,7 @@ namespace DBSyncTool.Services
         /// <summary>
         /// Executes BACKUP DATABASE command against AxDB with real-time progress polling.
         /// </summary>
-        public async Task<(bool Success, string? Error)> ExecuteBackupAsync(
+        public async Task<(bool Success, string? Error, string? ResolvedPath)> ExecuteBackupAsync(
             string pathPattern,
             string alias,
             CancellationToken cancellationToken)
@@ -41,13 +41,13 @@ namespace DBSyncTool.Services
             if (string.IsNullOrWhiteSpace(pathPattern))
             {
                 _logger("[Backup] No backup path specified.");
-                return (false, "Backup path is empty.");
+                return (false, "Backup path is empty.", null);
             }
 
             var (server, database) = _axDbSettings.ParseServerDatabase();
             if (string.IsNullOrWhiteSpace(database))
             {
-                return (false, "Database name could not be determined from AxDB connection.");
+                return (false, "Database name could not be determined from AxDB connection.", null);
             }
 
             string resolvedPath = ResolvePathPattern(pathPattern);
@@ -99,7 +99,7 @@ namespace DBSyncTool.Services
                 await WaitForPollingToFinish(pollingTask);
 
                 _logger($"[Backup] Backup completed successfully: {resolvedPath}");
-                return (true, null);
+                return (true, null, resolvedPath);
             }
             catch (OperationCanceledException)
             {
@@ -107,7 +107,7 @@ namespace DBSyncTool.Services
                 await WaitForPollingToFinish(pollingTask);
 
                 _logger("[Backup] Backup cancelled.");
-                return (false, "Backup was cancelled.");
+                return (false, "Backup was cancelled.", null);
             }
             catch (Exception ex)
             {
@@ -116,7 +116,7 @@ namespace DBSyncTool.Services
 
                 string errorMsg = $"Backup failed: {ex.Message}";
                 _logger($"[Backup] ERROR: {errorMsg}");
-                return (false, errorMsg);
+                return (false, errorMsg, null);
             }
         }
 

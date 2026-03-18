@@ -335,6 +335,12 @@ namespace DBSyncTool
             txtBackupPath.Text = _currentConfig.BackupPathPattern;
             chkBackupDatabaseEnabled.Checked = _currentConfig.BackupDatabaseEnabled;
 
+            // PowerShell Script
+            txtPowerShellScriptPath.Text = _currentConfig.PowerShellScriptPath;
+            chkPowerShellAutoExecute.Checked = _currentConfig.PowerShellAutoExecute;
+            txtLastBackupPath.Text = string.IsNullOrEmpty(_currentConfig.LastBackupPath)
+                ? "Last backup: (none)" : $"Last backup: {_currentConfig.LastBackupPath}";
+
             UpdateConnectionTabTitle();
 
             // Initialize system excluded tables if empty (new configuration)
@@ -384,6 +390,10 @@ namespace DBSyncTool
             // Backup Database
             _currentConfig.BackupPathPattern = txtBackupPath.Text;
             _currentConfig.BackupDatabaseEnabled = chkBackupDatabaseEnabled.Checked;
+
+            // PowerShell Script
+            _currentConfig.PowerShellScriptPath = txtPowerShellScriptPath.Text;
+            _currentConfig.PowerShellAutoExecute = chkPowerShellAutoExecute.Checked;
         }
 
         private void RefreshTimestampUI()
@@ -489,6 +499,21 @@ namespace DBSyncTool
 
             string timestamp = DateTime.Now.ToString("HH:mm:ss");
             txtLog.AppendText($"[{timestamp}] {message}\r\n");
+        }
+
+        private void LogRaw(string message)
+        {
+            if (InvokeRequired)
+            {
+                BeginInvoke(new Action<string>(LogRawDirect), message);
+                return;
+            }
+            LogRawDirect(message);
+        }
+
+        private void LogRawDirect(string message)
+        {
+            txtLog.AppendText($"{message}\r\n");
         }
 
         private void UpdateStatus(string status)
@@ -812,8 +837,9 @@ namespace DBSyncTool
 
         /// <summary>
         /// Executes database backup using AxDB connection settings.
+        /// Returns success flag and resolved backup file path.
         /// </summary>
-        private async Task<bool> ExecuteBackupAsync()
+        private async Task<(bool Success, string? ResolvedPath)> ExecuteBackupAsync()
         {
             var (_, database) = _currentConfig.AxDbConnection.ParseServerDatabase();
             string dbName = string.IsNullOrWhiteSpace(database) ? "AxDB" : database;
@@ -823,7 +849,7 @@ namespace DBSyncTool
 
             string alias = _currentConfig.Alias ?? "default";
             var service = new Services.BackupService(_currentConfig.AxDbConnection, Log);
-            var (success, error) = await service.ExecuteBackupAsync(
+            var (success, error, resolvedPath) = await service.ExecuteBackupAsync(
                 txtBackupPath.Text,
                 alias,
                 CancellationToken.None);
@@ -832,7 +858,13 @@ namespace DBSyncTool
             {
                 Log($"{dbName} backup completed successfully.");
                 Log("═══════════════════════════════════════════════════════════════════");
-                return true;
+
+                // Save resolved path to config
+                _currentConfig.LastBackupPath = resolvedPath ?? "";
+                txtLastBackupPath.Text = $"Last backup: {resolvedPath}";
+                _configManager.SaveConfiguration(_currentConfig);
+
+                return (true, resolvedPath);
             }
             else
             {
@@ -840,8 +872,101 @@ namespace DBSyncTool
                 Log("═══════════════════════════════════════════════════════════════════");
                 MessageBox.Show($"AxDB backup failed:\n\n{error}",
                     "Backup Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return (false, null);
+            }
+        }
+
+        private async Task<bool> ExecutePowerShellAsync(string backupFilePath)
+        {
+            Log("═══════════════════════════════════════════════════════════════════");
+            Log("Starting PowerShell script execution...");
+
+            var service = new Services.PowerShellService(Log, LogRaw);
+            var (success, error) = await service.ExecuteScriptAsync(
+                txtPowerShellScriptPath.Text,
+                backupFilePath,
+                CancellationToken.None);
+
+            if (success)
+            {
+                Log("PowerShell script completed successfully.");
+                Log("═══════════════════════════════════════════════════════════════════");
+                return true;
+            }
+            else
+            {
+                Log("PowerShell script execution failed.");
+                Log("═══════════════════════════════════════════════════════════════════");
+                MessageBox.Show($"PowerShell script failed:\n\n{error}",
+                    "PowerShell Script Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
+        }
+
+        private async void BtnExecutePowerShell_Click(object? sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtPowerShellScriptPath.Text))
+            {
+                MessageBox.Show("No PowerShell script path specified.", "Information",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_currentConfig.LastBackupPath))
+            {
+                MessageBox.Show("No backup has been performed yet. Run a backup first.",
+                    "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            btnExecutePowerShell.Enabled = false;
+
+            try
+            {
+                SaveConfigurationFromUI();
+                _configManager.SaveConfiguration(_currentConfig);
+                await ExecutePowerShellAsync(_currentConfig.LastBackupPath);
+            }
+            finally
+            {
+                btnExecutePowerShell.Enabled = true;
+            }
+        }
+
+        private void BtnBrowsePowerShell_Click(object? sender, EventArgs e)
+        {
+            using var dialog = new OpenFileDialog();
+            dialog.Title = "Select PowerShell Script";
+            dialog.Filter = "PowerShell Scripts (*.ps1)|*.ps1|All Files (*.*)|*.*";
+            dialog.FilterIndex = 1;
+
+            if (!string.IsNullOrWhiteSpace(txtPowerShellScriptPath.Text) &&
+                Directory.Exists(Path.GetDirectoryName(txtPowerShellScriptPath.Text)))
+            {
+                dialog.InitialDirectory = Path.GetDirectoryName(txtPowerShellScriptPath.Text)!;
+            }
+
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                txtPowerShellScriptPath.Text = dialog.FileName;
+            }
+        }
+
+        private void BtnPowerShellHelp_Click(object? sender, EventArgs e)
+        {
+            string helpText = @"param(
+    [Parameter(Mandatory=$true)]
+    [string]$BackupFilePath
+)
+
+# Example: Upload backup to network share
+# Write-Host ""Copying $BackupFilePath to network storage...""
+# Copy-Item -Path $BackupFilePath -Destination ""\\server\share\backups\"" -Force
+# Write-Host ""Upload complete.""";
+
+            Clipboard.SetText(helpText);
+            MessageBox.Show("Help text copied to clipboard.", "PowerShell Script Help",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void BtnCopyToClipboard_Click(object sender, EventArgs e)
@@ -1393,12 +1518,24 @@ namespace DBSyncTool
                         }
 
                         // Auto-execute backup if enabled and post-transfer scripts succeeded
+                        bool backupSuccess = false;
                         if (chkBackupDatabaseEnabled.Checked &&
                             !string.IsNullOrWhiteSpace(txtBackupPath.Text) &&
                             postTransferSuccess)
                         {
                             Log("Auto-executing database backup...");
-                            await ExecuteBackupAsync();
+                            var (bSuccess, _) = await ExecuteBackupAsync();
+                            backupSuccess = bSuccess;
+                        }
+
+                        // Auto-execute PowerShell if enabled and backup succeeded
+                        if (chkPowerShellAutoExecute.Checked &&
+                            !string.IsNullOrWhiteSpace(txtPowerShellScriptPath.Text) &&
+                            backupSuccess &&
+                            !string.IsNullOrWhiteSpace(_currentConfig.LastBackupPath))
+                        {
+                            Log("Auto-executing PowerShell script...");
+                            await ExecutePowerShellAsync(_currentConfig.LastBackupPath);
                         }
                     }
                 }

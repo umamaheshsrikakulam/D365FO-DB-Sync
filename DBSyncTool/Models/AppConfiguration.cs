@@ -58,6 +58,13 @@ namespace DBSyncTool.Models
         public bool BackupDatabaseEnabled { get; set; } = false;
         public string BackupPathPattern { get; set; } = "";  // e.g. J:\MSSQL_BACKUP\AxDB_[yyyy_MM_dd_HHmm].bak
 
+        // PowerShell script settings
+        public string PowerShellScriptPath { get; set; } = "";  // Path to .ps1 file
+        public bool PowerShellAutoExecute { get; set; } = false;
+
+        // Last backup path (resolved, stored after successful backup)
+        public string LastBackupPath { get; set; } = "";
+
         // Execute all post-transfer actions (SQL scripts, backup, any future actions)
         public bool ExecutePostTransferActions { get; set; } = false;
 
