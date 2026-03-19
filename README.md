@@ -10,6 +10,8 @@ The main idea: make the last X records (ordered by RecId) the same between Tier2
 
 ![](Assets/MainDialog.png)
 
+![Post transfer scripts](Assets/MainDialogPostTransfer.png)
+
 ## Usage
 
 ### Step 1: Save Current AxDB
