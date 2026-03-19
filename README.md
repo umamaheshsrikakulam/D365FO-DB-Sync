@@ -51,19 +51,22 @@ Two steps required to access Tier2 database:
 
 **Note:** You can avoid Step 2.2 by creating a permanent read-only user in Tier2:
 ```sql
-CREATE USER [myDBReader] WITH PASSWORD = 'YOUR_SECURE_PASSWORD_HERE';
-EXEC sp_addrolemember N'db_datareader', N'myDBReader';
-GRANT VIEW DATABASE PERFORMANCE STATE TO [myDBReader];
+CREATE USER [SyncDBReader] WITH PASSWORD = 'YOUR_SECURE_PASSWORD_HERE';
+EXEC sp_addrolemember N'db_datareader', N'SyncDBReader';
+GRANT VIEW DATABASE PERFORMANCE STATE TO [SyncDBReader];
+
+-- and firewall 
+exec sp_set_database_firewall_rule N'SyncDBReader', '<yourIP>', '<yourIP>'
 ```
 
 ### Step 3: Create Local Database User
 
 Create a user with db_owner role on your local SQL Server:
 ```sql
-CREATE LOGIN [YourUsername] WITH PASSWORD = 'YourPassword';
+CREATE LOGIN [SyncDBReaderLocal] WITH PASSWORD = 'YourPassword';
 USE AxDB;
-CREATE USER [YourUsername] FOR LOGIN [YourUsername];
-EXEC sp_addrolemember 'db_owner', [YourUsername];
+CREATE USER [SyncDBReaderLocal] FOR LOGIN [SyncDBReaderLocal];
+EXEC sp_addrolemember 'db_owner', [SyncDBReaderLocal];
 ```
 
 ### Step 4: Configure Application
@@ -141,21 +144,34 @@ By default, the system matches the last X records between AxDB and Tier2. For so
 - Subsequent runs use INCREMENTAL mode optimization (much faster)
 - Tables are processed in parallel (default: 10 workers, configurable)
 
-### Step 7: Post-Transfer SQL Scripts (Optional)
+### Step 7: Post-Transfer Actions (Optional)
 
-You can configure SQL scripts to run automatically after a successful transfer. This is useful for cleanup tasks or creating backups.
+The **Post-Transfer Actions** tab lets you configure actions that run automatically after a successful transfer. Actions execute in chain: SQL Scripts → Database Backup → PowerShell Script.
 
-1. Go to **Connection** tab
-2. Find **AxDB Post-Transfer SQL Scripts** section
-3. Enter SQL commands (one per line, lines starting with `--` are skipped as comments)
-4. Check **Execute automatically after successful transfer** to run on every sync
-5. Or click **Execute** button to run manually
+**SQL Scripts:**
+1. Enter SQL commands (one per line, lines starting with `--` are skipped as comments)
+2. Check **Execute automatically after successful transfer** to run on every sync
+3. Or click **Execute** button to run manually
 
-**Example:**
-```sql
---truncate table DMFEntityDbSyncVersion
---truncate table DMFDefinitionGroupExecutionBatchLink
-DECLARE @path NVARCHAR(500) = N'J:\MSSQL_BACKUP\AxDB_' + FORMAT(GETDATE(), 'yyyy_MM_dd') + N'.bak'; BACKUP DATABASE [AxDB] TO DISK = @path WITH COPY_ONLY, NOFORMAT, INIT, NAME = N'AxDB Database Backup', SKIP, NOREWIND, NOUNLOAD, COMPRESSION, STATS = 10
+**Database Backup:**
+1. Enter backup path pattern using `[format]` for date-time tokens (e.g., `J:\MSSQL_BACKUP\AxDB_[yyyy_MM_dd_HHmm].bak`)
+2. Check **Execute automatically** to run after successful SQL scripts
+3. Progress is polled in real-time via SQL Server DMVs
+
+**PowerShell Script:**
+1. Specify path to a `.ps1` script (use **...** button to browse)
+2. The script receives `-BackupFilePath` parameter with the resolved backup path
+3. Check **Execute automatically after successful backup** for auto-execution
+4. Click **?** button to copy a sample script template to clipboard
+
+**Example PowerShell script** (upload backup to Azure Blob):
+```powershell
+param(
+    [Parameter(Mandatory=$true)]
+    [string]$BackupFilePath
+)
+Write-Host "Uploading $BackupFilePath..."
+# Copy-Item -Path $BackupFilePath -Destination "\\server\share\backups\" -Force
 ```
 
 ## Features
@@ -173,7 +189,10 @@ DECLARE @path NVARCHAR(500) = N'J:\MSSQL_BACKUP\AxDB_' + FORMAT(GETDATE(), 'yyyy
 - **Smart Field Mapping**: Automatically maps common fields between source and destination
 - **Parallel Execution**: Configurable parallel workers (1-50) for concurrent table processing
 - **Delta Comparison**: Smart comparison using RECVERSION + datetime fields to skip unchanged records
-- **Post-Transfer SQL Scripts**: Run custom SQL commands after successful sync (e.g., cleanup, backups)
+- **Post-Transfer Actions**: Configurable chain of actions after successful sync:
+  - **SQL Scripts**: Run custom SQL commands (e.g., cleanup, index rebuild)
+  - **Database Backup**: Automated backup with date-time tokens in path and real-time progress
+  - **PowerShell Script**: Run a .ps1 script with backup file path as parameter (e.g., upload to blob storage)
 
 ### Strategy Syntax
 

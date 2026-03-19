@@ -410,7 +410,7 @@ namespace DBSyncTool
             chkTruncateAll.Name = "chkTruncateAll";
             chkTruncateAll.Text = "Force truncate mode";
             ToolTip truncateTooltip = new ToolTip();
-            truncateTooltip.SetToolTip(chkTruncateAll, "When checked, truncates all target tables before inserting data");
+            truncateTooltip.SetToolTip(chkTruncateAll, "When checked, truncates all target tables before inserting data. Use this for the first run of this tool or when Source database was restored");
 
             chkExecutePostTransferActions.AutoSize = true;
             chkExecutePostTransferActions.Location = new Point(10, 80);
@@ -862,44 +862,44 @@ namespace DBSyncTool
             btnExecutePowerShell.Click += BtnExecutePowerShell_Click;
 
             // Action Buttons (in Tables tab)
-            btnPrepareTableList.Location = new Point(12, 250);
+            btnPrepareTableList.Location = new Point(12, 220);
             btnPrepareTableList.Name = "btnPrepareTableList";
             btnPrepareTableList.Size = new Size(130, 30);
             btnPrepareTableList.Text = "Discover Tables";
             btnPrepareTableList.Click += BtnPrepareTableList_Click;
 
-            btnProcessTables.Location = new Point(152, 250);
+            btnProcessTables.Location = new Point(152, 220);
             btnProcessTables.Name = "btnProcessTables";
             btnProcessTables.Size = new Size(120, 30);
             btnProcessTables.Text = "Process Tables";
             btnProcessTables.Click += BtnProcessTables_Click;
 
-            btnRetryFailed.Location = new Point(282, 250);
+            btnRetryFailed.Location = new Point(282, 220);
             btnRetryFailed.Name = "btnRetryFailed";
             btnRetryFailed.Size = new Size(100, 30);
             btnRetryFailed.Text = "Retry Failed";
             btnRetryFailed.Click += BtnRetryFailed_Click;
 
-            btnProcessSelected.Location = new Point(392, 250);
+            btnProcessSelected.Location = new Point(392, 220);
             btnProcessSelected.Name = "btnProcessSelected";
             btnProcessSelected.Size = new Size(120, 30);
             btnProcessSelected.Text = "Process Selected";
             btnProcessSelected.Click += BtnProcessSelected_Click;
 
-            btnRunAll.Location = new Point(522, 250);
+            btnRunAll.Location = new Point(522, 220);
             btnRunAll.Name = "btnRunAll";
             btnRunAll.Size = new Size(100, 30);
             btnRunAll.Text = "Run All";
             btnRunAll.Click += BtnRunAll_Click;
 
-            btnStop.Location = new Point(632, 250);
+            btnStop.Location = new Point(632, 220);
             btnStop.Name = "btnStop";
             btnStop.Size = new Size(100, 30);
             btnStop.Text = "Stop";
             btnStop.Enabled = false;
             btnStop.Click += BtnStop_Click;
 
-            btnCopyToClipboard.Location = new Point(742, 250);
+            btnCopyToClipboard.Location = new Point(742, 220);
             btnCopyToClipboard.Name = "btnCopyToClipboard";
             btnCopyToClipboard.Size = new Size(140, 30);
             btnCopyToClipboard.Text = "Copy to Clipboard";
@@ -907,7 +907,7 @@ namespace DBSyncTool
 
             // Status Label (in Tables tab)
             lblStatus.AutoSize = true;
-            lblStatus.Location = new Point(12, 290);
+            lblStatus.Location = new Point(12, 260);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new Size(50, 15);
             lblStatus.Text = "Ready";
@@ -917,7 +917,7 @@ namespace DBSyncTool
             dgvTables.AllowUserToAddRows = false;
             dgvTables.AllowUserToDeleteRows = false;
             dgvTables.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
-            dgvTables.Location = new Point(12, 315);
+            dgvTables.Location = new Point(12, 285);
             dgvTables.Name = "dgvTables";
             dgvTables.ReadOnly = true;
             dgvTables.RowHeadersVisible = false;
@@ -928,7 +928,7 @@ namespace DBSyncTool
 
             // Summary Label (in Tables tab)
             lblSummary.AutoSize = true;
-            lblSummary.Location = new Point(12, 608);
+            lblSummary.Location = new Point(12, 590);
             lblSummary.Name = "lblSummary";
             lblSummary.Size = new Size(0, 15);
             lblSummary.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
@@ -936,7 +936,7 @@ namespace DBSyncTool
             // Log Panel (in Tables tab)
             grpLog.Controls.Add(btnClearLog);
             grpLog.Controls.Add(txtLog);
-            grpLog.Location = new Point(12, 625);
+            grpLog.Location = new Point(12, 610);
             grpLog.Name = "grpLog";
             grpLog.Size = new Size(1360, 185);
             grpLog.Text = "Log";
