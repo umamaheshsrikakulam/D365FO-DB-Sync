@@ -658,8 +658,8 @@ namespace DBSyncTool.Services
                     ? (double)(axdbTotalCount - controlData.Rows.Count) / controlData.Rows.Count * 100
                     : 0;
 
-                bool useTruncate = changePercent > _config.TruncateThresholdPercent ||
-                                   excessPercent > _config.TruncateThresholdPercent;
+                bool useTruncate = changePercent >= _config.TruncateThresholdPercent ||
+                                   excessPercent >= _config.TruncateThresholdPercent;
 
                 table.Tier2ChangedCount = tier2ChangedCount;
                 table.AxDBChangedCount = axdbChangedCount;
@@ -896,7 +896,7 @@ namespace DBSyncTool.Services
                         ? table.SqlTemplate
                         : null;
 
-                    DataTable tier2Data = await _tier2Service.FetchDataByTimestampAsync(
+                    using DataTable tier2Data = await _tier2Service.FetchDataByTimestampAsync(
                         table.TableName,
                         table.CopyableFields,
                         table.RecIdCount ?? _config.DefaultRecordCount,
@@ -950,8 +950,6 @@ namespace DBSyncTool.Services
                     {
                         table.InsertTimeSeconds = 0;
                     }
-
-                    tier2Data.Dispose();  // Free memory after use
                 }
 
                 // Enable triggers
@@ -1032,7 +1030,7 @@ namespace DBSyncTool.Services
             }
 
             long currentSeq = Convert.ToInt64(currentSeqResult);
-            long newSeq = Math.Max(maxRecId, currentSeq) + 10;
+            long newSeq = Math.Max(maxRecId, currentSeq) + AxDbDataService.SEQUENCE_GAP;
 
             string updateSeqSql = $"ALTER SEQUENCE [{sequenceName}] RESTART WITH {newSeq}";
             _logger($"[AxDB SQL] {updateSeqSql}");

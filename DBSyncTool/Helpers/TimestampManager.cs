@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using DBSyncTool.Models;
 
 namespace DBSyncTool.Helpers
@@ -7,13 +8,13 @@ namespace DBSyncTool.Helpers
     /// </summary>
     public class TimestampManager
     {
-        private Dictionary<string, byte[]> _tier2Timestamps = new();
-        private Dictionary<string, byte[]> _axdbTimestamps = new();
+        private ConcurrentDictionary<string, byte[]> _tier2Timestamps = new(StringComparer.OrdinalIgnoreCase);
+        private ConcurrentDictionary<string, byte[]> _axdbTimestamps = new(StringComparer.OrdinalIgnoreCase);
 
         public void LoadFromConfig(AppConfiguration config)
         {
-            _tier2Timestamps = ParseTimestampText(config.Tier2Timestamps);
-            _axdbTimestamps = ParseTimestampText(config.AxDBTimestamps);
+            _tier2Timestamps = new ConcurrentDictionary<string, byte[]>(ParseTimestampText(config.Tier2Timestamps), StringComparer.OrdinalIgnoreCase);
+            _axdbTimestamps = new ConcurrentDictionary<string, byte[]>(ParseTimestampText(config.AxDBTimestamps), StringComparer.OrdinalIgnoreCase);
         }
 
         public void SaveToConfig(AppConfiguration config)
@@ -40,8 +41,8 @@ namespace DBSyncTool.Helpers
 
         public void ClearTable(string tableName)
         {
-            _tier2Timestamps.Remove(tableName.ToUpper());
-            _axdbTimestamps.Remove(tableName.ToUpper());
+            _tier2Timestamps.TryRemove(tableName.ToUpper(), out _);
+            _axdbTimestamps.TryRemove(tableName.ToUpper(), out _);
         }
 
         public void ClearAll()
@@ -74,7 +75,7 @@ namespace DBSyncTool.Helpers
             return result;
         }
 
-        private string FormatTimestampText(Dictionary<string, byte[]> timestamps)
+        private string FormatTimestampText(ConcurrentDictionary<string, byte[]> timestamps)
         {
             var lines = timestamps
                 .OrderBy(kvp => kvp.Key)

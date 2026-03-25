@@ -532,7 +532,7 @@ namespace DBSyncTool
         {
             if (InvokeRequired)
             {
-                Invoke(new Action<List<TableInfo>>(UpdateTablesGrid), tables);
+                BeginInvoke(new Action<List<TableInfo>>(UpdateTablesGrid), tables);
                 return;
             }
 

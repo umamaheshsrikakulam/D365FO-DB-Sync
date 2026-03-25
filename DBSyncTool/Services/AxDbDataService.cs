@@ -8,7 +8,7 @@ namespace DBSyncTool.Services
     public class AxDbDataService
     {
         private const int DELETE_BATCH_SIZE = 5000;
-        private const int SEQUENCE_GAP = 10000;
+        public const int SEQUENCE_GAP = 10000;
 
         private readonly ConnectionSettings _connectionSettings;
         private readonly string _connectionString;
@@ -366,7 +366,7 @@ namespace DBSyncTool.Services
                 command.CommandTimeout = _connectionSettings.CommandTimeout;
                 await command.ExecuteNonQueryAsync(cancellationToken);
             }
-            catch (SqlException ex) when (ex.Message.Contains("Cannot TRUNCATE TABLE"))
+            catch (SqlException ex) when (ex.Number == 4712 || ex.Number == 3732 || ex.Message.Contains("Cannot TRUNCATE TABLE"))
             {
                 _logger($"[AxDB] TRUNCATE failed for {tableName} (referenced by another object), falling back to DELETE");
                 string deleteQuery = $"DELETE FROM [{tableName}]";

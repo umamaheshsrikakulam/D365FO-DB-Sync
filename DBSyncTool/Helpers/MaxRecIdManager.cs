@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using DBSyncTool.Models;
 
 namespace DBSyncTool.Helpers
@@ -8,11 +9,11 @@ namespace DBSyncTool.Helpers
     /// </summary>
     public class MaxRecIdManager
     {
-        private Dictionary<string, long> _maxRecIds = new();
+        private ConcurrentDictionary<string, long> _maxRecIds = new(StringComparer.OrdinalIgnoreCase);
 
         public void LoadFromConfig(AppConfiguration config)
         {
-            _maxRecIds = ParseMaxRecIdText(config.MaxTransferredRecIds);
+            _maxRecIds = new ConcurrentDictionary<string, long>(ParseMaxRecIdText(config.MaxTransferredRecIds), StringComparer.OrdinalIgnoreCase);
         }
 
         public void SaveToConfig(AppConfiguration config)
@@ -32,7 +33,7 @@ namespace DBSyncTool.Helpers
 
         public void ClearTable(string tableName)
         {
-            _maxRecIds.Remove(tableName.ToUpper());
+            _maxRecIds.TryRemove(tableName.ToUpper(), out _);
         }
 
         public void ClearAll()
@@ -63,7 +64,7 @@ namespace DBSyncTool.Helpers
             return result;
         }
 
-        private string FormatMaxRecIdText(Dictionary<string, long> maxRecIds)
+        private string FormatMaxRecIdText(ConcurrentDictionary<string, long> maxRecIds)
         {
             var lines = maxRecIds
                 .OrderBy(kvp => kvp.Key)
